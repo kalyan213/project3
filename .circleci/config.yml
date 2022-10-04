@@ -1,36 +1,52 @@
 version: 2.1
 
 commands:
-  destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      # Add parameter here   
+  destroy:
+    description: Destroy all cloudformation stacks with a given workflow ID.
     steps:
       - run:
-          name: Destroy environments
-          when: on_fail
+          name: Delete all files from the S3 bucket created
           command: |
-            # Your code here
-            exit 1
-
-  revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
-    parameters:
-      # Add parameter here     
-    steps:
-      - run:
-          name: Revert migrations
-          # Add when this will run
-          command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
-            if(( $SUCCESS==1 )); 
+            if aws s3api head-bucket --bucket project3-kalyan
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+              aws s3 rm s3://project3-kalyan/ --recursive
             fi
+          when: on_fail
+      - run:
+          name: Delete the AWS CloudFormation stacks
+          command: |
+            if aws cloudformation wait stack-exists --stack-name project3-kalyan
+            then 
+              aws cloudformation delete-stack --stack-name project3-kalyan
+            fi
+            if aws cloudformation wait stack-exists --stack-name UdapeopleB
+            then
+              aws cloudformation delete-stack --stack-name UdapeopleB
+            fi
+          when: on_fail  
+
+  revert-migration:
+    description: Revert the latest migration
+    steps:
+      - run:
+          name: Get the public DNS of EC2 instance from https://memstash.io/
+          command: |
+            PUBLIC_DNS=$(curl -H "token: kalyan" --request GET https://api.memstash.io/values/public_dns)
+            echo ${PUBLIC_DNS}
+            cd .circleci/ansible/
+            echo "[all]" > ./inventory
+            echo ${PUBLIC_DNS} >> ./inventory
+            cat ./inventory
+          when: on_fail
+      - add_ssh_keys:
+          fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
+      - run:
+          name: Revert the last migration
+          command: |
+            printenv >> ./backend/.env
+            cd .circleci/ansible/
+            ansible-playbook -i ./inventory db_rollback.yml
+          when: on_fail
             
 jobs:
   build-frontend:
@@ -43,8 +59,10 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # Your code here
-            exit 1
+            cd frontend
+            npm i
+            npm run build
+            npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -59,49 +77,73 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
-             exit 1
+            cd backend
+            npm i
+            npm run build
+            npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
 
   test-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-                
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: front-end test
+          command: |
+            cd backend
+            npm i
+            npm run test
+            npm audit fix --audit-level=critical --force                
   test-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-            
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Back-end test
+          command: |
+            cd backend
+            npm run test
+            npm audit fix --audit-level=critical --force            
   scan-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0      
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: front-end scan
+          command: |
+            cd frontend
+            npm i
+            npm audit fix --force
   scan-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: back-end scan
+          command: |
+            cd backend
+            npm audit fix --force
 
   deploy-infrastructure:
     docker:
+      - image:  amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
-      # Checkout code from git
+      - chechout
       - run:
           name: Ensure back-end infrastructure exists
           command: |
