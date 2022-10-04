@@ -7,21 +7,21 @@ commands:
       - run:
           name: Delete all files from the S3 bucket created
           command: |
-            if aws s3api head-bucket --bucket project3-kalyan
+            if aws s3api head-bucket --bucket udapeople-kalyan02
             then
-              aws s3 rm s3://project3-kalyan02/ --recursive
+              aws s3 rm s3://udapeople-kalyan02/ --recursive
             fi
           when: on_fail
       - run:
           name: Delete the AWS CloudFormation stacks
           command: |
-            if aws cloudformation wait stack-exists --stack-name project3-kalyan
+            if aws cloudformation wait stack-exists --stack-name udapeople-kalyan02
             then 
-              aws cloudformation delete-stack --stack-name project3-kalyan
+              aws cloudformation delete-stack --stack-name udapeople-kalyan
             fi
-            if aws cloudformation wait stack-exists --stack-name Project3
+            if aws cloudformation wait stack-exists --stack-name udapeopleB
             then
-              aws cloudformation delete-stack --stack-name Project3
+              aws cloudformation delete-stack --stack-name udapeopleB
             fi
           when: on_fail  
 
@@ -31,7 +31,7 @@ commands:
       - run:
           name: Get the public DNS of EC2 instance from https://memstash.io/
           command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan" --request GET https://api.memstash.io/values/public_dns)
+            PUBLIC_DNS=$(curl -H "token: kalyan01" --request GET https://api.memstash.io/values/public_dns)
             echo ${PUBLIC_DNS}
             cd .circleci/ansible/
             echo "[all]" > ./inventory
@@ -46,8 +46,7 @@ commands:
             printenv >> ./backend/.env
             cd .circleci/ansible/
             ansible-playbook -i ./inventory db_rollback.yml
-          when: on_fail
-            
+          when: on_fail            
 jobs:
   build-frontend:
     docker:
@@ -140,16 +139,16 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image:  amazon/aws-cli      
+      - image: amazon/aws-cli      
     steps:
-      - chechout
+      - checkout          
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=Project3 \
-              --stack-name "Project3" \
+              --tags project=udapeople_ \
+              --stack-name "udapeopleB" \
               --parameter-overrides ID="kalyan02"
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
@@ -166,8 +165,8 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=project3 \
-              --stack-name "project3" \
+              --tags project=udapeople_F \
+              --stack-name "udapeople-kalyan01" \
               --parameter-overrides ID="kalyan02"
       - destroy
   deploy-backend:
@@ -193,7 +192,7 @@ jobs:
             echo ${PUBLIC_DNS} >> ./inventory
             cat ./inventory
       - add_ssh_keys:
-          fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
+          fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
       - run:
           name: Configure server
           command: |
@@ -228,7 +227,7 @@ jobs:
       - run:
           name: Copy built frontend files to the S3 bucket
           command: |
-            aws s3 cp ./frontend/dist s3://project3-kalyan02/ --recursive
+            aws s3 cp ./frontend/dist s3://udapeople-kalyan02/ --recursive
       - destroy
 
   smoke-test:
@@ -247,7 +246,7 @@ jobs:
       - run:
           name: Smoke test on frontend
           command: |
-            URL="http://project3-kalyan02.s3-website.us-east-2.amazonaws.com/#/employees"
+            URL="http://udapeople-kalyan02.s3-website.us-east-2.amazonaws.com/#/employees"
             if curl -s ${URL} | grep "Welcome"
             then
               return 1
@@ -277,7 +276,7 @@ jobs:
           name: Update cloudfront distribution
           command: |
             aws cloudformation deploy \
-              --stack-name project3-cloudfront \
+              --stack-name udapeople-cloudfront \
               --template-file .circleci/files/cloudfront.yml \
               --region ${AWS_DEFAULT_REGION} \
               --parameter-overrides WorkflowID="kalyan02"
@@ -297,12 +296,12 @@ jobs:
             echo "Remove old stacks and files"
             if [ -n "${OLD_WORKFLOW_ID}" ] && [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-                echo deleting all files at S3 bucket project3-${OLD_WORKFLOW_ID}
-                aws s3 rm s3://project3-${OLD_WORKFLOW_ID}/ --recursive
-                echo deleting stack project3-kalyan02
-                aws cloudformation delete-stack --stack-name project3-kalyan02
-                echo deleting stack project3
-                aws cloudformation delete-stack --stack-name project3
+                echo deleting all files at S3 bucket udapeople-${OLD_WORKFLOW_ID}
+                aws s3 rm s3://udapeople-${OLD_WORKFLOW_ID}/ --recursive
+                echo deleting stack udapeople-kalyan02
+                aws cloudformation delete-stack --stack-name udapeople-kalyan02
+                echo deleting stack udapeopleB
+                aws cloudformation delete-stack --stack-name udapeople
               fi
       - destroy
 
