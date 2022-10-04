@@ -9,7 +9,7 @@ commands:
           command: |
             if aws s3api head-bucket --bucket project3-kalyan
             then
-              aws s3 rm s3://project3-kalyan/ --recursive
+              aws s3 rm s3://project3-kalyan02/ --recursive
             fi
           when: on_fail
       - run:
@@ -19,9 +19,9 @@ commands:
             then 
               aws cloudformation delete-stack --stack-name project3-kalyan
             fi
-            if aws cloudformation wait stack-exists --stack-name UdapeopleB
+            if aws cloudformation wait stack-exists --stack-name Project3
             then
-              aws cloudformation delete-stack --stack-name UdapeopleB
+              aws cloudformation delete-stack --stack-name Project3
             fi
           when: on_fail  
 
@@ -140,8 +140,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image:  amazon/aws-cli
-      # Docker image here that supports AWS CLI
+      - image:  amazon/aws-cli      
     steps:
       - chechout
       - run:
@@ -149,161 +148,163 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your back-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
-              exit 1
+              --tags project=Project3 \
+              --stack-name "Project3" \
+              --parameter-overrides ID="kalyan02"
+      - run:
+          name: Get and save public DNS of EC2 instance to https://memstash.io/
+          command: |
+            PUBLIC_DNS=$(aws ec2 describe-instances --region us-east-1 --filters 'Name=tag:Name,Values=backend-kalyan02' --query "Reservations[*].Instances[0].PublicDnsName" --output text)
+            echo ${PUBLIC_DNS}
+            curl -H "Content-Type: text/plain" \
+               -H "token: kalyan02" \
+               --request PUT \
+               --data ${PUBLIC_DNS} \
+               https://api.memstash.io/values/public_dns
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your front-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
-              exit 1
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            # Your code here
-            exit 1
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
-
-  configure-infrastructure:
+              --tags project=project3 \
+              --stack-name "project3" \
+              --parameter-overrides ID="kalyan02"
+      - destroy
+  deploy-backend:
     docker:
-      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - checkout
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            exit 1
+            apk add --no-cache curl
+            apk add --no-cache --upgrade bash
+            apk add --no-cache --update ansible
+            apk add --no-cache openssh-client
+            pip3 install awscli
+      - run:
+          name: Get the public DNS of EC2 instance from https://memstash.io/
+          command: |
+            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+            echo ${PUBLIC_DNS}
+            cd .circleci/ansible/
+            echo "[all]" > ./inventory
+            echo ${PUBLIC_DNS} >> ./inventory
+            cat ./inventory
+      - add_ssh_keys:
+          fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
       - run:
           name: Configure server
           command: |
-            # Your code here
-            exit 1
-      # Here's where you will add some code to rollback on failure      
-
-  run-migrations:
-    docker:
-      # Docker image here that supports NodeJS
-    steps:
-      # Checkout code from git
-      - run:
-          name: Run migrations
-          command: |
-            # Your code here
-            exit 1
-      - run:
-          name: Send migration results to memstash
-          command: |
-            # Your code here
-            exit 1
-     # Here's where you will add some code to rollback on failure      
+            printenv > ./backend/.env
+            cd .circleci/ansible/
+            ansible-playbook -i ./inventory deploy-backend.yml
+      - revert-migration
+      - destroy
 
   deploy-frontend:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
+      - checkout
       - run:
-          name: Install dependencies
+          name: Install system dependencies
           command: |
-            # your code here
+            apk add --no-cache curl
+            apk add --no-cache --upgrade bash
+            apk add --no-cache --update npm
+            pip3 install awscli
       - run:
-          name: Get backend url
+          name: Build the frontend
           command: |
-            # your code here
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+            echo ${PUBLIC_DNS}
+            export API_URL="http://${PUBLIC_DNS}:3030"
+            echo API_URL=${API_URL}
+            cd frontend
+            npm install
+            npm run build
       - run:
-          name: Deploy frontend objects
+          name: Copy built frontend files to the S3 bucket
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure      
-                    
-  deploy-backend:
-    docker:
-      # Docker image here that supports Ansible
-    steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Deploy backend
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            aws s3 cp ./frontend/dist s3://project3-kalyan02/ --recursive
+      - destroy
 
   smoke-test:
     docker:
-      # Lightweight Docker image 
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
+      - checkout
       - run:
-          name: Install dependencies
+          name: Install system dependencies
           command: |
-            # your code here
+            apk add --no-cache curl
+            apk add --no-cache --upgrade bash
+            apk add --no-cache --update ansible
+            apk add --no-cache openssh-client
+            pip3 install awscli
       - run:
-          name: Get backend url
+          name: Smoke test on frontend
           command: |
-            # your code here
+            URL="http://project3-kalyan02.s3-website.us-east-2.amazonaws.com/#/employees"
+            if curl -s ${URL} | grep "Welcome"
+            then
+              return 1
+            else
+              return 0
+            fi
       - run:
-          name: Backend smoke test.
+          name: Smoke test on backend
           command: |
-            # your code here
-      - run:
-          name: Frontend smoke test.
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+            echo ${PUBLIC_DNS}
+            if curl -s "http://${PUBLIC_DNS}:3030/api/status" | grep "ok"
+            then
+              return 0
+            else
+              return 1
+            fi
+      - revert-migration
+      - destroy
 
   cloudfront-update:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
     steps:
-      # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
+      - checkout
       - run:
           name: Update cloudfront distribution
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
-
-cleanup:
+            aws cloudformation deploy \
+              --stack-name project3-cloudfront \
+              --template-file .circleci/files/cloudfront.yml \
+              --region ${AWS_DEFAULT_REGION} \
+              --parameter-overrides WorkflowID="kalyan02"
+      - destroy
+  cleanup:
     docker:
-      # Docker image here
+      - image: amazon/aws-cli
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Get old stack workflow id
           command: |
-            # your code here
-            export OldWorkflowID="the id here"
-            export STACKS=[] #put the list of stacks here
-      - run:
-          name: Remove old stacks and files
-          command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            OLD_WORKFLOW_ID=$(aws cloudformation list-exports --query "Exports[?Name=='CircleCI-WorkflowID'].Value" --output text)
+            echo OLD_WORKFLOW_ID=${OLD_WORKFLOW_ID}
+            STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter UPDATE_COMPLETE CREATE_COMPLETE --output text)
+            echo STACKS=${STACKS}
+            echo "Remove old stacks and files"
+            if [ -n "${OLD_WORKFLOW_ID}" ] && [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              # your code here
-            fi
-            
+                echo deleting all files at S3 bucket project3-${OLD_WORKFLOW_ID}
+                aws s3 rm s3://project3-${OLD_WORKFLOW_ID}/ --recursive
+                echo deleting stack project3-kalyan02
+                aws cloudformation delete-stack --stack-name project3-kalyan02
+                echo deleting stack project3
+                aws cloudformation delete-stack --stack-name project3
+              fi
+      - destroy
 
 workflows:
   default:
@@ -322,18 +323,29 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
-              only: [test-feature-branch]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
+              only: main
       - deploy-backend:
-          requires: [run-migrations]
+          requires: [deploy-infrastructure]
+          filters:
+            branches:
+              only: main
+      - deploy-frontend:
+          requires: [deploy-backend]
+          filters:
+            branches:
+              only: main
       - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+          requires: [deploy-frontend]
+          filters:
+            branches:
+              only: main
       - cloudfront-update:
           requires: [smoke-test]
+          filters:
+            branches:
+              only: main
       - cleanup:
           requires: [cloudfront-update]
+          filters:
+            branches:
+              only: main
