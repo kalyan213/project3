@@ -149,7 +149,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople_ \
-              --stack-name "udapeopleB" \
+              --stack-name "udapeople-kalyan02" \
               --parameter-overrides ID="kalyan02"
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
@@ -167,7 +167,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople_F \
-              --stack-name "udapeople-kalyan01" \
+              --stack-name "udapeople-kalyan02" \
               --parameter-overrides ID="kalyan02"
       - destroy
   deploy-backend:
@@ -319,33 +319,33 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: main
-      - deploy-backend:
-          requires: [deploy-infrastructure]
-          filters:
-            branches:
-              only: main
-      - deploy-frontend:
-          requires: [deploy-backend]
-          filters:
-            branches:
-              only: main
-      - smoke-test:
-          requires: [deploy-frontend]
-          filters:
-            branches:
-              only: main
-      - cloudfront-update:
-          requires: [smoke-test]
-          filters:
-            branches:
-              only: main
-      - cleanup:
-          requires: [cloudfront-update]
-          filters:
-            branches:
-              only: main
+      # - deploy-infrastructure:
+      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: main
+      # - deploy-backend:
+      #     requires: [deploy-infrastructure]
+      #     filters:
+      #       branches:
+      #         only: main
+      # - deploy-frontend:
+      #     requires: [deploy-backend]
+      #     filters:
+      #       branches:
+      #         only: main
+      # - smoke-test:
+      #     requires: [deploy-frontend]
+      #     filters:
+      #       branches:
+      #         only: main
+      # - cloudfront-update:
+      #     requires: [smoke-test]
+      #     filters:
+      #       branches:
+      #         only: main
+      # - cleanup:
+      #     requires: [cloudfront-update]
+      #     filters:
+      #       branches:
+      #         only: main
