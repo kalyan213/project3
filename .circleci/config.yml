@@ -168,8 +168,8 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople_F \
-              --stack-name "udapeople-kalyan02" \
-              --parameter-overrides ID="kalyan02"
+              --stack-name "udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - destroy
   deploy-backend:
     docker:
