@@ -1,52 +1,52 @@
 version: 2.1
 orbs:
   slack: circleci/slack@4.10.1
-commands:
-  destroy:
-    description: Destroy all cloudformation stacks with a given workflow ID.
-    steps:
-      - run:
-          name: Delete all files from the S3 bucket created
-          command: |
-            if aws s3api head-bucket --bucket udapeople-kalyan02
-            then
-              aws s3 rm s3://udapeople-kalyan02/ --recursive
-            fi
-          when: on_fail
-      - run:
-          name: Delete the AWS CloudFormation stacks
-          command: |
-            if aws cloudformation wait stack-exists --stack-name udapeople-kalyan02
-            then 
-              aws cloudformation delete-stack --stack-name udapeople-kalyan
-            fi
-            if aws cloudformation wait stack-exists --stack-name udapeopleB
-            then
-              aws cloudformation delete-stack --stack-name udapeopleB
-            fi
-          when: on_fail  
+# commands:
+#   destroy:
+#     description: Destroy all cloudformation stacks with a given workflow ID.
+#     steps:
+#       - run:
+#           name: Delete all files from the S3 bucket created
+#           command: |
+#             if aws s3api head-bucket --bucket udapeople-kalyan02
+#             then
+#               aws s3 rm s3://udapeople-kalyan02/ --recursive
+#             fi
+#           when: on_fail
+#       - run:
+#           name: Delete the AWS CloudFormation stacks
+#           command: |
+#             if aws cloudformation wait stack-exists --stack-name udapeople-kalyan02
+#             then 
+#               aws cloudformation delete-stack --stack-name udapeople-kalyan
+#             fi
+#             if aws cloudformation wait stack-exists --stack-name udapeopleB
+#             then
+#               aws cloudformation delete-stack --stack-name udapeopleB
+#             fi
+#           when: on_fail  
 
-  revert-migration:
-    description: Revert the latest migration
-    steps:
-      - run:
-          name: Get the public DNS of EC2 instance from https://memstash.io/
-          command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan01" --request GET https://api.memstash.io/values/public_dns)
-            echo ${PUBLIC_DNS}
-            cd .circleci/ansible/
-            echo "[all]" > ./inventory
-            echo ${PUBLIC_DNS} >> ./inventory
-            cat ./inventory
-          when: on_fail
-      - add_ssh_keys:
-          fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
-      - run:
-          name: Revert the last migration
-          command: |
-            printenv >> ./backend/.env
-            cd .circleci/ansible/
-            ansible-playbook -i ./inventory db_rollback.yml
+#   revert-migration:
+#     description: Revert the latest migration
+#     steps:
+#       - run:
+#           name: Get the public DNS of EC2 instance from https://memstash.io/
+#           command: |
+#             PUBLIC_DNS=$(curl -H "token: kalyan01" --request GET https://api.memstash.io/values/public_dns)
+#             echo ${PUBLIC_DNS}
+#             cd .circleci/ansible/
+#             echo "[all]" > ./inventory
+#             echo ${PUBLIC_DNS} >> ./inventory
+#             cat ./inventory
+#           when: on_fail
+#       - add_ssh_keys:
+#           fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
+#       - run:
+#           name: Revert the last migration
+#           command: |
+#             printenv >> ./backend/.env
+#             cd .circleci/ansible/
+#             ansible-playbook -i ./inventory db_rollback.yml
           when: on_fail            
 jobs:
   build-frontend:
