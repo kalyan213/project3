@@ -152,24 +152,7 @@ jobs:
               --tags project=udapeople_ \
               --stack-name "udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
-      - run:
-          name: Get and save public DNS of EC2 instance to https://memstash.io/
-          command: |
-            PUBLIC_DNS=$(aws ec2 describe-instances --region us-east-1 --filters 'Name=tag:Name,Values=backend-kalyan02' --query "Reservations[*].Instances[0].PublicDnsName" --output text)
-            echo ${PUBLIC_DNS}
-            curl -H "Content-Type: text/plain" \
-               -H "token: kalyan02" \
-               --request PUT \
-               --data ${PUBLIC_DNS} \
-               https://api.memstash.io/values/public_dns
-      - run:
-          name: Ensure front-end infrastructure exist
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople_F \
-              --stack-name "udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+
       - destroy
   deploy-backend:
     docker:
