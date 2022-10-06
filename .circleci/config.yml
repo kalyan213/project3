@@ -324,7 +324,7 @@ workflows:
           filters:
             branches:
               only: main
-      - deploy-backend:
+      # - deploy-backend:
       #     requires: [deploy-infrastructure]
       #     filters:
       #       branches:
@@ -344,8 +344,8 @@ workflows:
       #     filters:
       #       branches:
       #         only: main
-      # - cleanup:
-      #     requires: [cloudfront-update]
-      #     filters:
-      #       branches:
-      #         only: main
+      - cleanup:
+          requires: [cloudfront-update]
+          filters:
+            branches:
+              only: main
