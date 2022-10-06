@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.10.1
 commands:
-#   destroy:
+  destroy:
 #     description: Destroy all cloudformation stacks with a given workflow ID.
 #     steps:
 #       - run:
