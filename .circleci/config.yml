@@ -22,7 +22,6 @@ commands:
             sudo apt install ansible
 
   destroy:
-    description: Destroy all cloudformation stacks with a given workflow ID.
     parameters:
       workflow_id:
         type: string
@@ -354,4 +353,4 @@ workflows:
           requires: [deploy-infrastructure]
           filters:
             branches:
-              only: main
+              only: master
