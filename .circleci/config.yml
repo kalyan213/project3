@@ -172,11 +172,11 @@ jobs:
             --output text >> .circleci/ansible/inventory.txt
             cat .circleci/outputs/backend_url.txt
       - run: yum -y install tar gzip
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - .circleci/outputs/backend_url.txt
-            - .circleci/ansible/inventory.txt
+      # - persist_to_workspace:
+      #     root: ~/
+      #     paths:
+      #       - .circleci/outputs/backend_url.txt
+      #       - .circleci/ansible/inventory.txt
       - destroy:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
   deploy-backend:
