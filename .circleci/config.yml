@@ -27,8 +27,7 @@ commands:
             if [[ -f "~/project3/.circleci/outputs/db_migration_success" ]]; then
               npm i
               npm run migration:revert
-            fi
-          name: Configure server
+            fi       
           command: |
             ansible-playbook -i inventory.txt playbook.yml
   # revert-migration:
