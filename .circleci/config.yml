@@ -175,8 +175,8 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - project3/.circleci/outputs/backend_url.txt
-            - project3/.circleci/ansible/inventory.txt
+            - .circleci/outputs/backend_url.txt
+            - .circleci/ansible/inventory.txt
       - destroy:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
   deploy-backend:
