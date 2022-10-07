@@ -131,7 +131,7 @@ jobs:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
-          name: revert config 
+          name: revert config
           when: on_fail
           command: |
             cd ~/project/backend
@@ -139,9 +139,6 @@ jobs:
               npm i
               npm run migration:revert
             fi   
-          command: |
-            ansible-playbook -i inventory.txt playbook.yml
-
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli      
@@ -389,8 +386,8 @@ workflows:
           # filters:
           #   branches:
           #     only: master
-      # - deploy-backend:
-      #     requires: [deploy-infrastructure]
+      - deploy-backend:
+          requires: [deploy-infrastructure]
       #     filters:
       #       branches:
       ##         only: master
