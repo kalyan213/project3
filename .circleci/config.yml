@@ -44,7 +44,6 @@ commands:
           name: Configure server
           command: |
             ansible-playbook -i inventory.txt playbook.yml
-
   revert-migration:
     description: Revert the latest migration
     steps:
