@@ -127,7 +127,7 @@ jobs:
           command: |
             cd backend
             npm audit fix --audit-level=critical --force
-  revert_migrations:
+  revert_migration:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
