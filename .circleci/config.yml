@@ -15,6 +15,18 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
+  revert-migration:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - run:
+          name: revert config
+          when: on_fail
+          command: |
+            cd ~/project/backend
+            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
+              npm i
+              npm run migration:revert
+            fi   
   # revert-migration:
   #   description: Revert the last migration if successfully run in the current workflow.
   #   steps:
@@ -199,7 +211,7 @@ jobs:
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
+      - revert-migration
   
     # docker:
     #   - image: python:3.7-alpine3.11
@@ -355,18 +367,6 @@ jobs:
                 aws cloudformation delete-stack --stack-name udapeople
               fi
       - destroy
-  revert_migration:
-    description: Revert the last migration if successfully run in the current workflow.
-    steps:
-      - run:
-          name: revert config
-          when: on_fail
-          command: |
-            cd ~/project/backend
-            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
-              npm i
-              npm run migration:revert
-            fi   
 workflows:
   default:
     jobs:
