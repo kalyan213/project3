@@ -131,15 +131,14 @@ jobs:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
-          name: replmigrations
+          name: revert config 
           when: on_fail
           command: |
             cd ~/project/backend
             if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
               npm i
               npm run migration:revert
-            fi
-          name: Configure server       
+            fi   
           command: |
             ansible-playbook -i inventory.txt playbook.yml
 
