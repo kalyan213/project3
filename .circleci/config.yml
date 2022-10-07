@@ -127,18 +127,6 @@ jobs:
           command: |
             cd backend
             npm audit fix --audit-level=critical --force
-  revert_migration:
-    description: Revert the last migration if successfully run in the current workflow.
-    steps:
-      - run:
-          name: revert config
-          when: on_fail
-          command: |
-            cd ~/project/backend
-            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
-              npm i
-              npm run migration:revert
-            fi   
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli      
@@ -367,7 +355,18 @@ jobs:
                 aws cloudformation delete-stack --stack-name udapeople
               fi
       - destroy
-
+  revert_migration:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - run:
+          name: revert config
+          when: on_fail
+          command: |
+            cd ~/project/backend
+            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
+              npm i
+              npm run migration:revert
+            fi   
 workflows:
   default:
     jobs:
