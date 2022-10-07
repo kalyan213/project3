@@ -23,15 +23,18 @@ commands:
 
   destroy:
     description: Destroy all cloudformation stacks with a given workflow ID.
+    parameters:
+      workflow_id:
+        type: string
     steps:
-      - run:
-          name: Delete all files from the S3 bucket created
-          command: |
-            if aws s3api head-bucket --bucket udapeople-kalyan02
-            then
-              aws s3 rm s3://udapeople-kalyan02/ --recursive
-            fi
-          when: on_fail
+      # - run:
+      #     name: Delete all files from the S3 bucket created
+      #     command: |
+      #       if aws s3api head-bucket --bucket udapeople-kalyan02
+      #       then
+      #         aws s3 rm s3://udapeople-kalyan02/ --recursive
+      #       fi
+      #     when: on_fail
       - run:
           name: Delete the AWS CloudFormation stacks
           command: |
