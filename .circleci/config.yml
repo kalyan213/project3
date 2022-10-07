@@ -29,6 +29,22 @@ commands:
             fi       
           # command: |
           #   ansible-playbook -i inventory.txt playbook.yml
+  undo_migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            cd ~/project/backend
+            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
+              npm i
+              npm run migration:revert
+            fi
+          name: Configure server
+          command: |
+            ansible-playbook -i inventory.txt playbook.yml
+
   revert-migration:
     description: Revert the latest migration
     steps:
@@ -178,59 +194,95 @@ jobs:
             - project/.circleci/outputs/backend_url.txt
             - project/.circleci/ansible/inventory.txt
       - destroy:
-          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
+
   deploy-backend:
     docker:
       - image: python:3.7-alpine3.11
-        environment:
-          NODE_ENV: "production"
-          VERSION: "1"
-          ENVIRONMENT: "production"
-          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-          TYPEORM_HOST: $TYPEORM_HOST
-          TYPEORM_USERNAME: $TYPEORM_USERNAME
-          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-          TYPEORM_DATABASE: $TYPEORM_DATABASE
-          TYPEORM_PORT: $TYPEORM_PORT
-          TYPEORM_ENTITIES: $TYPEORM_ENTITIES    
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys: [build-backend]
       - run:
           name: Install dependencies
           command: |
-            apk add --no-cache curl
-            apk add --no-cache --upgrade bash
-            apk add --no-cache --update ansible
-            apk add --no-cache openssh-client
-            apk add --no-cache tar
-            apk add --no-cache gzip
-            apk add --no-cache nodejs
-            apk add --no-cache npm
-            apk add --no-cache jq
-            pip3 install awscli
+            apk add --update curl nodejs npm ansible zip
+            pip install awscli
       - run:
-          name: Get the public DNS of EC2 instance from https://memstash.io/
+          name: Build backend app
           command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-            echo ${PUBLIC_DNS}
-            cd .circleci/ansible/
-            echo "[all]" > ./inventory
-            echo ${PUBLIC_DNS} >> ./inventory
-            cat ./inventory
+            cd ~/project/backend
+            npm i
+            npm run build
+            cd dist
+            cp ../package.json .
+            zip -rq dist.zip *
+            mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
+            mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
+      - add_ssh_keys:
+          fingerprints: [ "dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8" ]
       - run:
-          name: Configure server
+          name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
-            printenv > ./backend/.env
-            cd .circleci/ansible/
-            ansible-playbook -i ./inventory deploy-backend.yml
-      - revert-migration
-      - destroy
+            ls ~/project/.circleci/ansible/roles/deploy_backend/files/
+            cd ~/project/backend
+            ansible-galaxy install weareinteractive.environment
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
+  
+    # docker:
+    #   - image: python:3.7-alpine3.11
+    #     environment:
+    #       NODE_ENV: "production"
+    #       VERSION: "1"
+    #       ENVIRONMENT: "production"
+    #       TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+    #       TYPEORM_HOST: $TYPEORM_HOST
+    #       TYPEORM_USERNAME: $TYPEORM_USERNAME
+    #       TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+    #       TYPEORM_DATABASE: $TYPEORM_DATABASE
+    #       TYPEORM_PORT: $TYPEORM_PORT
+    #       TYPEORM_ENTITIES: $TYPEORM_ENTITIES    
+    # steps:
+    #   - checkout
+    #   - add_ssh_keys:
+    #       fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
+    #   - attach_workspace:
+    #       at: ~/
+    #   - restore_cache:
+    #       keys: [build-backend]
+    #   - run:
+    #       name: Install dependencies
+    #       command: |
+    #         apk add --no-cache curl
+    #         apk add --no-cache --upgrade bash
+    #         apk add --no-cache --update ansible
+    #         apk add --no-cache openssh-client
+    #         apk add --no-cache tar
+    #         apk add --no-cache gzip
+    #         apk add --no-cache nodejs
+    #         apk add --no-cache npm
+    #         apk add --no-cache jq
+    #         pip3 install awscli
+    #   - run:
+    #       name: Get the public DNS of EC2 instance from https://memstash.io/
+    #       command: |
+    #         PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+    #         echo ${PUBLIC_DNS}
+    #         cd .circleci/ansible/
+    #         echo "[all]" > ./inventory
+    #         echo ${PUBLIC_DNS} >> ./inventory
+    #         cat ./inventory
+    #   - run:
+    #       name: Configure server
+    #       command: |
+    #         printenv > ./backend/.env
+    #         cd .circleci/ansible/
+    #         ansible-playbook -i ./inventory deploy-backend.yml
+    #   - revert-migration
+    #   - destroy
 
   deploy-frontend:
     docker:
