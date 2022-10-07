@@ -22,50 +22,36 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            cd ~/project3/backend
-            if [[ -f "~/project3/.circleci/outputs/db_migration_success" ]]; then
-              npm i
-              npm run migration:revert
-            fi       
-          # command: |
-          #   ansible-playbook -i inventory.txt playbook.yml
-  undo_migrations:
-    description: Revert the last migration if successfully run in the current workflow.
-    steps:
-      - run:
-          name: Revert migrations
-          when: on_fail
-          command: |
             cd ~/project/backend
             if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
               npm i
               npm run migration:revert
             fi
-          name: Configure server
+          name: Configure server       
           command: |
             ansible-playbook -i inventory.txt playbook.yml
-  revert-migration:
-    description: Revert the latest migration
-    steps:
-      - run:
-          name: Get the public DNS of EC2 instance from https://memstash.io/
-          command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan01" --request GET https://api.memstash.io/values/public_dns)
-            echo ${PUBLIC_DNS}
-            cd .circleci/ansible/
-            echo "[all]" > ./inventory
-            echo ${PUBLIC_DNS} >> ./inventory
-            cat ./inventory
-          when: on_fail
-      - add_ssh_keys:
-          fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
-      - run:
-          name: Revert the last migration
-          command: |
-            printenv >> ./backend/.env
-            cd .circleci/ansible/
-            ansible-playbook -i ./inventory db_rollback.yml
-          when: on_fail            
+  # revert-migration:
+  #   description: Revert the last migration if successfully run in the current workflow.
+  #   steps:
+  #     - run:
+  #         name: Get the public DNS of EC2 instance from https://memstash.io/
+  #         command: |
+  #           PUBLIC_DNS=$(curl -H "token: kalyan01" --request GET https://api.memstash.io/values/public_dns)
+  #           echo ${PUBLIC_DNS}
+  #           cd .circleci/ansible/
+  #           echo "[all]" > ./inventory
+  #           echo ${PUBLIC_DNS} >> ./inventory
+  #           cat ./inventory
+  #         when: on_fail
+  #     - add_ssh_keys:
+  #         fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
+  #     - run:
+  #         name: Revert the last migration
+  #         command: |
+  #           printenv >> ./backend/.env
+  #           cd .circleci/ansible/
+  #           ansible-playbook -i ./inventory db_rollback.yml
+  #         when: on_fail            
 jobs:
   build-frontend:
     docker:
