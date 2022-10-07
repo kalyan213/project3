@@ -194,7 +194,8 @@ jobs:
             --query "Stacks[0].Outputs[0].OutputValue" \
             --output text >> .circleci/ansible/inventory.txt
 
-      - destroy
+      - destroy:
+          workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'  
   deploy-backend:
     docker:
       - image: python:3.7-alpine3.11
