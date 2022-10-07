@@ -3,7 +3,6 @@ orbs:
  slack: circleci/slack@4.10.1
 commands:
   destroy:
-    description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
       workflow_id:
         type: string
