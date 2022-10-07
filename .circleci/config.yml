@@ -131,7 +131,7 @@ jobs:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
-          name: Revert migrations
+          name: replmigrations
           when: on_fail
           command: |
             cd ~/project/backend
