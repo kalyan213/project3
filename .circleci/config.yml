@@ -28,8 +28,8 @@ commands:
               npm i
               npm run migration:revert
             fi       
-          command: |
-            ansible-playbook -i inventory.txt playbook.yml
+          # command: |
+          #   ansible-playbook -i inventory.txt playbook.yml
   # revert-migration:
   #   description: Revert the latest migration
   #   steps:
