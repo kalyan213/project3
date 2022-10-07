@@ -2,6 +2,25 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.10.1
 commands:
+  dependencies:
+    steps:
+      - run:
+          name: Installing necessary packages
+          command: |
+            sudo apt update
+            sudo apt install -y tar gzip curl software-properties-common
+      - run:
+          name: Installing aws-cli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: Installing ansible
+          command: |
+            sudo add-apt-repository --yes --update ppa:ansible/ansible
+            sudo apt install ansible
+
   destroy:
     description: Destroy all cloudformation stacks with a given workflow ID.
     steps:
@@ -16,14 +35,19 @@ commands:
       - run:
           name: Delete the AWS CloudFormation stacks
           command: |
-            if aws cloudformation wait stack-exists --stack-name udapeople-kalyan02
-            then 
-              aws cloudformation delete-stack --stack-name udapeople-kalyan
-            fi
-            if aws cloudformation wait stack-exists --stack-name udapeopleB
-            then
-              aws cloudformation delete-stack --stack-name udapeopleB
-            fi
+            # if aws cloudformation wait stack-exists --stack-name udapeople-kalyan02
+            # then 
+            #   aws cloudformation delete-stack --stack-name udapeople-kalyan
+            # fi
+            # if aws cloudformation wait stack-exists --stack-name udapeopleB
+            # then
+            #   aws cloudformation delete-stack --stack-name udapeopleB
+            aws cloudformation delete-stack \
+              --stack-name "udapeople-frontend-<< parameters.workflow_id >>"
+            aws cloudformation delete-stack \
+              --stack-name "udapeople-backend-<< parameters.workflow_id >>"
+            aws s3 rm "s3://udapeople-<< parameters.workflow_id >>" --recursive
+            # fi
           when: on_fail  
 
   revert-migration:
