@@ -173,7 +173,7 @@ jobs:
             cat .circleci/outputs/backend_url.txt
       - run: yum -y install tar gzip
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
             - project3/.circleci/outputs/backend_url.txt
             - project3/.circleci/ansible/inventory.txt
