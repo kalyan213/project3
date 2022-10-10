@@ -212,58 +212,59 @@ jobs:
       - destroy:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migration
-  
-    # docker:
-    #   - image: python:3.7-alpine3.11
-    #     environment:
-    #       NODE_ENV: "production"
-    #       VERSION: "1"
-    #       ENVIRONMENT: "production"
-    #       TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-    #       TYPEORM_HOST: $TYPEORM_HOST
-    #       TYPEORM_USERNAME: $TYPEORM_USERNAME
-    #       TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-    #       TYPEORM_DATABASE: $TYPEORM_DATABASE
-    #       TYPEORM_PORT: $TYPEORM_PORT
-    #       TYPEORM_ENTITIES: $TYPEORM_ENTITIES    
-    # steps:
-    #   - checkout
-    #   - add_ssh_keys:
-    #       fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
-    #   - attach_workspace:
-    #       at: ~/
-    #   - restore_cache:
-    #       keys: [build-backend]
-    #   - run:
-    #       name: Install dependencies
-    #       command: |
-    #         apk add --no-cache curl
-    #         apk add --no-cache --upgrade bash
-    #         apk add --no-cache --update ansible
-    #         apk add --no-cache openssh-client
-    #         apk add --no-cache tar
-    #         apk add --no-cache gzip
-    #         apk add --no-cache nodejs
-    #         apk add --no-cache npm
-    #         apk add --no-cache jq
-    #         pip3 install awscli
-    #   - run:
-    #       name: Get the public DNS of EC2 instance from https://memstash.io/
-    #       command: |
-    #         PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-    #         echo ${PUBLIC_DNS}
-    #         cd .circleci/ansible/
-    #         echo "[all]" > ./inventory
-    #         echo ${PUBLIC_DNS} >> ./inventory
-    #         cat ./inventory
-    #   - run:
-    #       name: Configure server
-    #       command: |
-    #         printenv > ./backend/.env
-    #         cd .circleci/ansible/
-    #         ansible-playbook -i ./inventory deploy-backend.yml
-    #   - revert-migration
-    #   - destroy
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+        environment:
+          NODE_ENV: "production"
+          VERSION: "1"
+          ENVIRONMENT: "production"
+          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+          TYPEORM_HOST: $TYPEORM_HOST
+          TYPEORM_USERNAME: $TYPEORM_USERNAME
+          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+          TYPEORM_DATABASE: $TYPEORM_DATABASE
+          TYPEORM_PORT: $TYPEORM_PORT
+          TYPEORM_ENTITIES: $TYPEORM_ENTITIES    
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys: [build-backend]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache curl
+            apk add --no-cache --upgrade bash
+            apk add --no-cache --update ansible
+            apk add --no-cache openssh-client
+            apk add --no-cache tar
+            apk add --no-cache gzip
+            apk add --no-cache nodejs
+            apk add --no-cache npm
+            apk add --no-cache jq
+            pip3 install awscli
+      - run:
+          name: Get the public DNS of EC2 instance from https://memstash.io/
+          command: |
+            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+            echo ${PUBLIC_DNS}
+            cd .circleci/ansible/
+            echo "[all]" > ./inventory
+            echo ${PUBLIC_DNS} >> ./inventory
+            cat ./inventory
+      - run:
+          name: Configure server
+          command: |
+            printenv > ./backend/.env
+            cd .circleci/ansible/
+            ansible-playbook -i ./inventory deploy-backend.yml
+      - revert-migration
+      - destroy
 
   deploy-frontend:
     docker:
@@ -381,6 +382,9 @@ workflows:
       # - scan-frontend:
       #     requires: [build-frontend]
       - deploy-infrastructure
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+
           # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           # filters:
           #   branches:
