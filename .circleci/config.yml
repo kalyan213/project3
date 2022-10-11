@@ -266,85 +266,85 @@ jobs:
       - revert-migration
       - destroy
 
-  deploy-frontend:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      - checkout
-      - run:
-          name: Install system dependencies
-          command: |
-            apk add --no-cache curl
-            apk add --no-cache --upgrade bash
-            apk add --no-cache --update npm
-            pip3 install awscli
-      - run:
-          name: Build the frontend
-          command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-            echo ${PUBLIC_DNS}
-            export API_URL="http://${PUBLIC_DNS}:3030"
-            echo API_URL=${API_URL}
-            cd frontend
-            npm install
-            npm run build
-      - run:
-          name: Copy built frontend files to the S3 bucket
-          command: |
-            aws s3 cp ./frontend/dist s3://udapeople-kalyan02/ --recursive
-      - destroy
+  # deploy-frontend:
+  #   docker:
+  #     - image: python:3.7-alpine3.11
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Install system dependencies
+  #         command: |
+  #           apk add --no-cache curl
+  #           apk add --no-cache --upgrade bash
+  #           apk add --no-cache --update npm
+  #           pip3 install awscli
+  #     - run:
+  #         name: Build the frontend
+  #         command: |
+  #           PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+  #           echo ${PUBLIC_DNS}
+  #           export API_URL="http://${PUBLIC_DNS}:3030"
+  #           echo API_URL=${API_URL}
+  #           cd frontend
+  #           npm install
+  #           npm run build
+  #     - run:
+  #         name: Copy built frontend files to the S3 bucket
+  #         command: |
+  #           aws s3 cp ./frontend/dist s3://udapeople-kalyan02/ --recursive
+  #     - destroy
 
-  smoke-test:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      - checkout
-      - run:
-          name: Install system dependencies
-          command: |
-            apk add --no-cache curl
-            apk add --no-cache --upgrade bash
-            apk add --no-cache --update ansible
-            apk add --no-cache openssh-client
-            pip3 install awscli
-      - run:
-          name: Smoke test on frontend
-          command: |
-            URL="http://udapeople-kalyan02.s3-website.us-east-2.amazonaws.com/#/employees"
-            if curl -s ${URL} | grep "Welcome"
-            then
-              return 1
-            else
-              return 0
-            fi
-      - run:
-          name: Smoke test on backend
-          command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-            echo ${PUBLIC_DNS}
-            if curl -s "http://${PUBLIC_DNS}:3030/api/status" | grep "ok"
-            then
-              return 0
-            else
-              return 1
-            fi
-      - revert-migration
-      - destroy
+  # smoke-test:
+  #   docker:
+  #     - image: python:3.7-alpine3.11
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Install system dependencies
+  #         command: |
+  #           apk add --no-cache curl
+  #           apk add --no-cache --upgrade bash
+  #           apk add --no-cache --update ansible
+  #           apk add --no-cache openssh-client
+  #           pip3 install awscli
+  #     - run:
+  #         name: Smoke test on frontend
+  #         command: |
+  #           URL="http://udapeople-kalyan02.s3-website.us-east-2.amazonaws.com/#/employees"
+  #           if curl -s ${URL} | grep "Welcome"
+  #           then
+  #             return 1
+  #           else
+  #             return 0
+  #           fi
+  #     - run:
+  #         name: Smoke test on backend
+  #         command: |
+  #           PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+  #           echo ${PUBLIC_DNS}
+  #           if curl -s "http://${PUBLIC_DNS}:3030/api/status" | grep "ok"
+  #           then
+  #             return 0
+  #           else
+  #             return 1
+  #           fi
+  #     - revert-migration
+  #     - destroy
   
-  cloudfront-update:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            aws cloudformation deploy \
-              --stack-name udapeople-cloudfront \
-              --template-file .circleci/files/cloudfront.yml \
-              --region ${AWS_DEFAULT_REGION} \
-              --parameter-overrides WorkflowID="kalyan02"
-      - destroy
+  # cloudfront-update:
+  #   docker:
+  #     - image: amazon/aws-cli
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Update cloudfront distribution
+  #         command: |
+  #           aws cloudformation deploy \
+  #             --stack-name udapeople-cloudfront \
+  #             --template-file .circleci/files/cloudfront.yml \
+  #             --region ${AWS_DEFAULT_REGION} \
+  # #             --parameter-overrides WorkflowID="kalyan02"
+  #     - destroy
   cleanup:
     docker:
       - image: amazon/aws-cli
