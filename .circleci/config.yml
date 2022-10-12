@@ -248,21 +248,27 @@ jobs:
             apk add --no-cache npm
             apk add --no-cache jq
             pip3 install awscli
-      - run:
-          name: Get the public DNS of EC2 instance from https://memstash.io/
-          command: |
-            PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-            echo ${PUBLIC_DNS}
-            cd .circleci/ansible/
-            echo "[all]" > ./inventory
-            echo ${PUBLIC_DNS} >> ./inventory
-            cat ./inventory
+      # - run:
+      #     name: Get the public DNS of EC2 instance from https://memstash.io/
+      #     command: |
+      #       PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
+      #       echo ${PUBLIC_DNS}
+      #       cd .circleci/ansible/
+      #       echo "[all]" > ./inventory
+      #       echo ${PUBLIC_DNS} >> ./inventory
+      #       cat ./inventory
+      # - run:
+      #     name: Configure server
+      #     command: |
+      #       printenv > ./backend/.env
+      #       cd .circleci/ansible/
+      #       ansible-playbook -i ./inventory deploy-backend.yml
       - run:
           name: Configure server
           command: |
-            printenv > ./backend/.env
-            cd .circleci/ansible/
-            ansible-playbook -i ./inventory deploy-backend.yml
+            cat .circleci/ansible/inventory.txt
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml      
       - revert-migration
       # - destroy
       - destroy:
