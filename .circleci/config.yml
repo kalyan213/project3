@@ -48,7 +48,7 @@ commands:
   #           printenv >> ./backend/.env
   #           cd .circleci/ansible/
   #           ansible-playbook -i ./inventory db_rollback.yml
-  #         when: on_fail            
+  # #        when: on_fail            
 jobs:
   build-frontend:
     docker:
