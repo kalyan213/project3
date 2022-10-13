@@ -437,7 +437,7 @@ jobs:
   #             --template-file .circleci/files/cloudfront.yml \
   #             --region ${AWS_DEFAULT_REGION} \
   # #             --parameter-overrides WorkflowID="kalyan02"
-  #     - destroy
+  ##     - destroy
   cleanup:
     docker:
       - image: amazon/aws-cli
