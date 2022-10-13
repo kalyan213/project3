@@ -406,29 +406,36 @@ jobs:
   #           apk add --no-cache curl
   #           apk add --no-cache --upgrade bash
   #           apk add --no-cache --update ansible
+  #           apk  add --no-cache --update  pip3
   #           apk add --no-cache openssh-client
   #           pip3 install awscli
   #     - run:
   #         name: Smoke test on frontend
-  #         command: |
-  #           URL="http://udapeople-kalyan02.s3-website.us-east-2.amazonaws.com/#/employees"
-  #           if curl -s ${URL} | grep "Welcome"
-  #           then
-  #             return 1
-  #           else
-  #             return 0
-  #           fi
-  #     - run:
-  #         name: Smoke test on backend
-  #         command: |
-  #           PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-  #           echo ${PUBLIC_DNS}
-  #           if curl -s "http://${PUBLIC_DNS}:3030/api/status" | grep "ok"
-  #           then
-  #             return 0
-  #           else
-  #             return 1
-  #           fi
+          #  command: |
+          #   export BACKEND_IP=$(aws ec2 describe-instances \
+          #                       --filters 'Name=tag:Name,Values=backend-*' \
+          #                       --query 'Reservations[*].Instances[*].PublicIpAddress' --output text) 
+          #   API_URL="http://${BACKEND_IP}:3030"
+          #   echo "${API_URL}"
+          #   if curl "${API_URL}/api/status" | grep "ok"
+          #   then
+          #   return 0
+          #   else
+          #   return 1
+          #   fi
+      # - run:
+      #     name: Frontend smoke test.
+      #     command: |            
+      #       URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"
+      #       echo ${URL} 
+      #       if curl  -s ${URL} | grep "Welcome"
+      #       then
+      #       return 0
+      #       else
+      #       return 1
+      #       fi
+      #       echo Current WorkFlowID: "${CIRCLE_WORKFLOW_ID:0:7}"
+
   #     - revert-migration
   #     - destroy
   
@@ -474,18 +481,18 @@ jobs:
 workflows:
   default:
     jobs:
-      # - build-frontend
-      # - build-backend
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - test-backend:
-      #     requires: [build-backend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      - deploy-infrastructure
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]      
+      - build-frontend
+      - build-backend
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]      
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       # - run-migrations:
