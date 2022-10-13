@@ -306,13 +306,33 @@ jobs:
             apk add tar gzip
             apk update pip3
             pip3 install awscli
+      - run:
+          name: taring the backend file
+          command: |
+            touch .env
+            echo ENVIROMENT=production > .env
+            echo NODE_ENV=production >> .env
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> .env
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> .env
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> .env
+            echo TYPEORM_HOST=$TYPEORM_HOST >> .env
+            echo TYPEORM_PORT=$TYPEORM_PORT >> .env
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> .env
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> .env
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
+            ls -lart
+            cat .env
+            mv .env backend
+            tar -C backend -czvf artifact.tar.gz .
+      - store_artifacts:
+          path: ~/project/artifact.tar.gz
       - add_ssh_keys:
           fingerprints: ["71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39"]
       - attach_workspace:
           at:  ~/ 
       - run: cat ~/project/.circleci/ansible/inventory.txt
-      - add_ssh_keys:
-          fingerprints: ["71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39"]
+  
       - run:
           name: Install dependencies
           command: |
@@ -373,7 +393,7 @@ jobs:
             cd ~/project/.circleci/ansible
             export ANSIBLE_HOST_KEY_CHECKING=False
             cat inventory.txt
-            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt  configure-server.yml 
+            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt  deploy-backend.yml
       ## - destroy
       - destroy:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
@@ -510,8 +530,8 @@ workflows:
       - run-migrations:
           requires: [configure-infrastructure]
           # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      # - deploy-backend:
-      #     requires: [deploy-infrastructure]
+      - deploy-backend:
+          requires: [deploy-infrastructure]
       #     filters:
       #       branches:
       ###         only: master
