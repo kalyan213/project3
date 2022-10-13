@@ -178,12 +178,13 @@ jobs:
             --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query "Stacks[0].Outputs[0].OutputValue" \
             --output text >> .circleci/ansible/inventory.txt
-            cat .circleci/outputs/backend_url.txt
+            # cat .circleci/outputs/backend_url.txt
+            cat .circleci/ansible/inventory.txt
       - run: yum -y install tar gzip
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/outputs/backend_url.txt
+            # - project/.circleci/outputs/backend_url.txt
             - project/.circleci/ansible/inventory.txt
       - destroy:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
