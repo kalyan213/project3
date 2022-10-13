@@ -174,12 +174,20 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            aws cloudformation describe-stacks \
-            --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --query "Stacks[0].Outputs[0].OutputValue" \
-            --output text >> .circleci/ansible/inventory.txt
-            # cat .circleci/outputs/backend_url.txt
-            cat .circleci/ansible/inventory.txt
+            # aws cloudformation describe-stacks \
+            # --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            # --query "Stacks[0].Outputs[0].OutputValue" \
+            # --output text >> .circleci/ansible/inventory.txt
+            # # cat .circleci/outputs/backend_url.txt
+            # cat .circleci/ansible/inventory.txt
+            cd .circleci/ansible
+            echo "[web]" > inventory.txt
+            export BACKEND_SERVER_IP=$(aws ec2 describe-instances \
+                                --filters 'Name=tag:Name,Values=backend-*' \
+                                --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            echo "backend_serverIP = ${BACKEND_SERVER_IP}"
+            echo ${BACKEND_SERVER_IP} >> inventory.txt
+            cat inventory.txt
       - run: yum -y install tar gzip
       - persist_to_workspace:
           root: ~/
