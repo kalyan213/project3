@@ -314,25 +314,26 @@ jobs:
             apk add --no-cache nodejs
             apk add --no-cache npm
             apk add --no-cache jq
+            pip install awscli
       # - install_ansible
       # - install_awscli
       # - attach_workspace:
       #     at: ~/
       # - restore_cache:
       #     keys: [build-backend]
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache curl
-            apk add --no-cache --upgrade bash
-            apk add --no-cache --update ansible
-            apk add --no-cache openssh-client
-            apk add --no-cache tar
-            apk add --no-cache gzip
-            apk add --no-cache nodejs
-            apk add --no-cache npm
-            apk add --no-cache jq
-            pip install awscli
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       apk add --no-cache curl
+      #       apk add --no-cache --upgrade bash
+      #       apk add --no-cache --update ansible
+      #       apk add --no-cache openssh-client
+      #       apk add --no-cache tar
+      #       apk add --no-cache gzip
+      #       apk add --no-cache nodejs
+      #       apk add --no-cache npm
+      #       apk add --no-cache jq
+      #       pip install awscli
       # - run:
       #     name: Get the public DNS of EC2 instance from https://memstash.io/
       #     command: |
@@ -495,12 +496,9 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]      
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
           # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          # filters:
-          #   branches:
-          #     only: master
       # - deploy-backend:
       #     requires: [deploy-infrastructure]
       #     filters:
