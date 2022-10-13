@@ -160,7 +160,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udapeople_B \
+              --tags project=udapeople \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
@@ -168,7 +168,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople_F \
+              --tags project=udapeople \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
@@ -254,7 +254,7 @@ jobs:
             mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
             mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
       - add_ssh_keys:
-          fingerprints: [ "dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8" ]
+          fingerprints: [ "71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39" ]
       - run:
           name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
@@ -290,12 +290,12 @@ jobs:
             apk update pip3
             pip3 install awscli
       - add_ssh_keys:
-          fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
+          fingerprints: ["71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39"]
       - attach_workspace:
           at:  ~/ 
       - run: cat ~/project/.circleci/ansible/inventory.txt
       - add_ssh_keys:
-          fingerprints: ["dd:ec:a5:7d:8e:89:75:7c:cd:15:2a:5d:96:e5:5a:c8"]
+          fingerprints: ["71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39"]
       - run:
           name: Install dependencies
           command: |
