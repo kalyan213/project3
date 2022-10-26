@@ -637,8 +637,8 @@ workflows:
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
-          # requires: [configure-infrastructure]
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [configure-infrastructure]
+          ## requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       - deploy-backend:
           requires: [run-migrations]
       - deploy-frontend:
