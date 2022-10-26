@@ -616,7 +616,7 @@ jobs:
              --tags project=udapeople    
              
             echo Current WorkFlowID: "${CIRCLE_WORKFLOW_ID:0:7}"    
-      - destroy-environment:
+      - destroy:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migration
 workflows:
