@@ -37,29 +37,7 @@ commands:
             sudo apt install curl 
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
-            sudo ./aws/install
-  # revert-migration:
-  #   description: Revert the last migration if successfully run in the current workflow.
-  #   steps:
-  #     - run:
-  #         name: Get the public DNS of EC2 instance from https://memstash.io/
-  #         command: |
-  #           PUBLIC_DNS=$(curl -H "token: kalyan01" --request GET https://api.memstash.io/values/public_dns)
-  #           echo ${PUBLIC_DNS}
-  #           cd .circleci/ansible/
-  #           echo "[all]" > ./inventory
-  #           echo ${PUBLIC_DNS} >> ./inventory
-  #           cat ./inventory
-  #         when: on_fail
-  #     - add_ssh_keys:
-  #         fingerprints: ["33:c8:64:fb:aa:80:1b:63:c6:98:30:9a:c8:8c:9a:14"]
-  #     - run:
-  #         name: Revert the last migration
-  #         command: |
-  #           printenv >> ./backend/.env
-  #           cd .circleci/ansible/
-  #           ansible-playbook -i ./inventory db_rollback.yml
-  # #        when: on_fail            
+            sudo ./aws/install    
 jobs:
   build-frontend:
     docker:
@@ -192,7 +170,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            # - project/.circleci/outputs/backend_url.txt
             - project/.circleci/ansible/inventory.txt
       - attach_workspace:
           at: ~/
@@ -233,13 +210,9 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
              echo "its successfully migrated - storing SUCCESS -> 1"
-             curl -k https://kvdb.io/VCGo6kPMyuyuYqeHAV9PzN/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+             curl -k https://kvdb.io/4QiN3eUegD4KU9qxnsccSB/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi   
             echo Current WorkFlowID: "${CIRCLE_WORKFLOW_ID:0:7}"
-      # - persist_to_workspace:
-      #     root: ~/
-      #     paths:
-      #       - .circleci/outputs/
       - destroy:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migration
@@ -277,18 +250,6 @@ jobs:
             cat .env
             mv .env backend
             tar -C backend -czvf artifact.tar.gz .
-
-      # - run:
-      #     name: Build backend app
-      #     command: |
-      #       cd ~/project/backend
-      #       npm i
-      #       npm run build
-      #       cd dist
-      #       cp ../package.json .
-      #       zip -rq dist.zip *
-      #       mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
-      #       mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
       - add_ssh_keys:
           fingerprints: [ "71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39" ]
       - run:  
@@ -319,17 +280,6 @@ jobs:
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
-        # environment:
-        #   NODE_ENV: "production"
-        #   VERSION: "1"
-        #   ENVIRONMENT: "production"
-        #   TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-        #   TYPEORM_HOST: $TYPEORM_HOST
-        #   TYPEORM_USERNAME: $TYPEORM_USERNAME
-        #   TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-        #   TYPEORM_DATABASE: $TYPEORM_DATABASE
-        #   TYPEORM_PORT: $TYPEORM_PORT
-        #   TYPEORM_ENTITIES: $TYPEORM_ENTITIES    
     steps:
       - checkout
       - run:
@@ -339,27 +289,6 @@ jobs:
             apk add tar gzip
             apk update pip3
             pip3 install awscli
-      # - run:
-      #     name: taring the backend file
-      #     command: |
-      #       touch .env
-      #       echo ENVIROMENT=production > .env
-      #       echo NODE_ENV=production >> .env
-      #       echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> .env
-      #       echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
-      #       echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> .env
-      #       echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> .env
-      #       echo TYPEORM_HOST=$TYPEORM_HOST >> .env
-      #       echo TYPEORM_PORT=$TYPEORM_PORT >> .env
-      #       echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> .env
-      #       echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> .env
-      #       echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
-      #       ls -lart
-      #       cat .env
-      #       mv .env backend
-      #       tar -C backend -czvf artifact.tar.gz .
-      # - store_artifacts:
-      #     path: ~/project/artifact.tar.gz
       - add_ssh_keys:
           fingerprints: ["71:9b:12:18:22:38:7c:a9:1d:1b:d4:11:fc:f2:e1:39"]
       - attach_workspace:
@@ -378,47 +307,6 @@ jobs:
             apk add --no-cache npm
             apk add --no-cache jq
             pip install awscli
-      # - install_ansible
-      # - install_awscli
-      # - attach_workspace:
-      #     at: ~/
-      # - restore_cache:
-      #     keys: [build-backend]
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       apk add --no-cache curl
-      #       apk add --no-cache --upgrade bash
-      #       apk add --no-cache --update ansible
-      #       apk add --no-cache openssh-client
-      #       apk add --no-cache tar
-      #       apk add --no-cache gzip
-      #       apk add --no-cache nodejs
-      #       apk add --no-cache npm
-      #       apk add --no-cache jq
-      #       pip install awscli
-      # - run:
-      #     name: Get the public DNS of EC2 instance from https://memstash.io/
-      #     command: |
-      #       PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-      #       echo ${PUBLIC_DNS}
-      #       cd .circleci/ansible/
-      #       echo "[all]" > ./inventory
-      #       echo ${PUBLIC_DNS} >> ./inventory
-      #       cat ./inventory
-      # - run:
-      #     name: Configure server
-      #     command: |
-      #       printenv > ./backend/.env
-      #       cd .circleci/ansible/
-      #       ansible-playbook -i ./inventory deploy-backend.yml
-      # - run:
-      #     name: Configure server
-      #     command: |
-      #       cd .circleci/ansible/
-      #       cat inventory.txt
-      #       # export ANSIBLE_HOST_KEY_CHECKING=False
-      #       ansible-playbook -i inventory.txt configure-server.yml      
       - run:
           name: Configure server
           command: | 
@@ -426,7 +314,7 @@ jobs:
             export ANSIBLE_HOST_KEY_CHECKING=False
             cat inventory.txt
             ansible-playbook -vvvv -i ~/project/.circleci/ansible/inventory.txt  configure-server.yml
-      ## - destroy
+
       - destroy:
           workflow_id: '${CIRCLE_WORKFLOW_ID:0:7}'
       - revert-migration
@@ -466,114 +354,6 @@ jobs:
       - destroy:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migration
-
-  # deploy-frontend:
-  #   docker:
-  #     - image: python:3.7-alpine3.11
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Install system dependencies
-  #         command: |
-  #           apk add --no-cache curl
-  #           apk add --no-cache --upgrade bash
-  #           apk add --no-cache --update npm
-  #           pip3 install awscli
-  #     - run:
-  #         name: Build the frontend
-  #         command: |
-  #           PUBLIC_DNS=$(curl -H "token: kalyan02" --request GET https://api.memstash.io/values/public_dns)
-  #           echo ${PUBLIC_DNS}
-  #           export API_URL="http://${PUBLIC_DNS}:3030"
-  #           echo API_URL=${API_URL}
-  #           cd frontend
-  #           npm install
-  #           npm run build
-  #     - run:
-  #         name: Copy built frontend files to the S3 bucket
-  #         command: |
-  #           aws s3 cp ./frontend/dist s3://udapeople-kalyan02/ --recursive
-  #     - destroy
-
-  # smoke-test:
-  #   docker:
-  #     - image: python:3.7-alpine3.11
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Install system dependencies
-  #         command: |
-  #           apk add --no-cache curl
-  #           apk add --no-cache --upgrade bash
-  #           apk add --no-cache --update ansible
-  #           apk  add --no-cache --update  pip3
-  #           apk add --no-cache openssh-client
-  #           pip3 install awscli
-  #     - run:
-  #         name: Smoke test on frontend
-          #  command: |
-          #   export BACKEND_IP=$(aws ec2 describe-instances \
-          #                       --filters 'Name=tag:Name,Values=backend-*' \
-          #                       --query 'Reservations[*].Instances[*].PublicIpAddress' --output text) 
-          #   API_URL="http://${BACKEND_IP}:3030"
-          #   echo "${API_URL}"
-          #   if curl "${API_URL}/api/status" | grep "ok"
-          #   then
-          #   return 0
-          #   else
-          #   return 1
-          #   fi
-      # - run:
-      #     name: Frontend smoke test.
-      #     command: |            
-      #       URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"
-      #       echo ${URL} 
-      #       if curl  -s ${URL} | grep "Welcome"
-      #       then
-      #       return 0
-      #       else
-      #       return 1
-      #       fi
-      #       echo Current WorkFlowID: "${CIRCLE_WORKFLOW_ID:0:7}"
-
-  #     - revert-migration
-  #     - destroy
-  
-  # cloudfront-update:
-  #   docker:
-  #     - image: amazon/aws-cli
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Update cloudfront distribution
-  #         command: |
-  #           aws cloudformation deploy \
-  #             --stack-name udapeople-cloudfront \
-  #             --template-file .circleci/files/cloudfront.yml \
-  #             --region ${AWS_DEFAULT_REGION} \
-  # #             --parameter-overrides WorkflowID="kalyan02"
-  ##     - destroy
-
-  #  cloudfront-update:
-  #   docker:
-  #     - image: amazon/aws-cli
-  #   steps:
-  #     - checkout
-  #     - run: yum install -y tar gzip
-  #     - run:
-  #         name: update cloud front distribution
-  #         command: |
-  #           aws cloudformation deploy \
-  #            --template-file .circleci/files/cloudfront.yml \
-  #            --stack-name InitialStack \
-  #            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-  #            --tags project=udapeople    
-             
-  #           echo Current WorkFlowID: "${CIRCLE_WORKFLOW_ID:0:7}"    
-  #     - destroy-environment:
-  #         workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-  #     - revert-migrations:
-  #         workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}    
  
   cleanup:
     docker:
