@@ -89,7 +89,7 @@ jobs:
             cd frontend
             npm i
             npm run test
-	          # Commenting the below 
+            # commenting line 
             # npm audit fix --audit-level=critical --force                
   test-backend:
     docker:
@@ -104,7 +104,7 @@ jobs:
             cd backend
             npm i
             npm run test
-	          # Commenting the below 
+            # Commenting the below
             # npm audit fix --audit-level=critical --force            
   scan-frontend:
     docker:
