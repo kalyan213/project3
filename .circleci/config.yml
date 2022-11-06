@@ -53,7 +53,8 @@ jobs:
             cd frontend
             npm i
             npm run build
-            npm audit fix --audit-level=critical --force
+            # Commenting the below 
+	    #npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -89,7 +90,8 @@ jobs:
             cd frontend
             npm i
             npm run test
-            npm audit fix --audit-level=critical --force                
+	    # Commenting the below 
+            #npm audit fix --audit-level=critical --force                
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -103,7 +105,8 @@ jobs:
             cd backend
             npm i
             npm run test
-            npm audit fix --audit-level=critical --force            
+	    # Commenting the below 
+            #npm audit fix --audit-level=critical --force            
   scan-frontend:
     docker:
       - image: circleci/node:13.8.0      
@@ -134,7 +137,8 @@ jobs:
     docker:
       - image: amazon/aws-cli      
     steps:
-      - checkout          
+      - checkout
+      - run: yum install -y tar gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -162,7 +166,7 @@ jobs:
             echo "backend_serverIP = ${BACKEND_SERVER_IP}"
             echo ${BACKEND_SERVER_IP} >> inventory.txt
             cat inventory.txt
-      - run: yum -y install tar gzip
+
       - persist_to_workspace:
           root: ~/
           paths:
@@ -433,19 +437,19 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]      
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-backend:
-          requires: [run-migrations]
-      - deploy-frontend:
-          requires: [deploy-backend]
-      - smoke-test:
-          requires: [deploy-frontend, deploy-backend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      - cleanup:
-         requires: [cloudfront-update]
+      # - deploy-infrastructure:
+      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]      
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      # - deploy-backend:
+      #     requires: [run-migrations]
+      # - deploy-frontend:
+      #     requires: [deploy-backend]
+      # - smoke-test:
+      #     requires: [deploy-frontend, deploy-backend]
+      # - cloudfront-update:
+      #     requires: [smoke-test]
+      # - cleanup:
+      #    requires: [cloudfront-update]
