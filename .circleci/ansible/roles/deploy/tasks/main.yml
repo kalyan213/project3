@@ -1,0 +1,45 @@
+---
+- name: Install Dependencies
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
+
+- name: Install pm2
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: Creates directory
+  file:
+    path: ~/backend
+    state: directory
+    mode: 0755
+
+- name: Extract artifact.tar.gz into ~/backend
+  ansible.builtin.unarchive:
+    src: ~/project/artifact.tar.gz
+    dest: ~/backend
+
+- name: install npm & switch to 13.8.0 to build
+  become: true
+  shell: |
+    cd /home/ubuntu/backend
+    npm install -g n
+    n 13.8.0
+    chown -R ubuntu:ubuntu /home/ubuntu/backend
+
+- name: build
+  shell: |
+    cd /home/ubuntu/backend
+    npm install
+    npm run build
+    
+- name: start pm2
+  shell: |
+    cd /home/ubuntu/backend    
+    pm2 start npm --name backend -- start

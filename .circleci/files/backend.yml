@@ -41,7 +41,14 @@ Resources:
       SecurityGroups:
         - Ref: InstanceSecurityGroup
       KeyName: udapeople
-      ImageId: ami-09d56f8956ab235b3
+      ImageId: ami-09d56f8956ab235b3 
       Tags:
         - Key: Name
           Value: !Sub backend-${ID}
+##debug
+  AddElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref EC2Instance 
+        
