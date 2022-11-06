@@ -53,8 +53,7 @@ jobs:
             cd frontend
             npm i
             npm run build
-            # Commenting the below 
-	    #npm audit fix --audit-level=critical --force
+            # Commenting the below   # npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -90,8 +89,8 @@ jobs:
             cd frontend
             npm i
             npm run test
-	    # Commenting the below 
-            #npm audit fix --audit-level=critical --force                
+	          # Commenting the below 
+            # npm audit fix --audit-level=critical --force                
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -105,8 +104,8 @@ jobs:
             cd backend
             npm i
             npm run test
-	    # Commenting the below 
-            #npm audit fix --audit-level=critical --force            
+	          # Commenting the below 
+            # npm audit fix --audit-level=critical --force            
   scan-frontend:
     docker:
       - image: circleci/node:13.8.0      
