@@ -1,0 +1,9 @@
+URL01 - https://github.com/kalyan213/project3
+
+URL02 - http://udapeople-3488d3a.s3-website-us-east-1.amazonaws.com/#/employees
+
+URL03 - https://d3dpo9azbn3qo0.cloudfront.net/#/employees
+
+URL04 - http://52.72.243.252:3030/api/status
+
+URL05 - http://ec2-3-83-148-78.compute-1.amazonaws.com:9090/targets
