@@ -249,12 +249,13 @@ jobs:
             curl -s $URL | grep "Welcome"
             if curl -s $URL | grep "Welcome"
             then
-              return 0
+              return 1
             else
               return 1
             fi
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migration
 
   configure-infrastructure:
     docker:
@@ -450,7 +451,7 @@ workflows:
           requires: [deploy-backend]
       - smoke-test:
           requires: [deploy-frontend, deploy-backend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      - cleanup:
-         requires: [cloudfront-update]
+      # - cloudfront-update:
+      #     requires: [smoke-test]
+      # - cleanup:
+      #    requires: [cloudfront-update]
