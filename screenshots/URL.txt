@@ -1,9 +1,11 @@
 URL01 - https://github.com/kalyan213/project3
 
-URL02 - http://udapeople-3488d3a.s3-website-us-east-1.amazonaws.com/#/employees
+URL02 - http://udapeople-224d6ed.s3-website-us-east-1.amazonaws.com/#/employees
 
-URL03 - https://d3dpo9azbn3qo0.cloudfront.net/#/employees
+URL03 - http://d2k1g63kln18w3.cloudfront.net/#/employees
 
-URL04 - http://52.72.243.252:3030/api/status
+URL04 - http://52.206.206.218:3030/api/status
 
-URL05 - http://ec2-3-83-148-78.compute-1.amazonaws.com:9090/targets
+URL05 - http://ec2-52-207-149-108.compute-1.amazonaws.com:9090/targets
+Alert Manager
+URL06 - http://ec2-52-207-149-108.compute-1.amazonaws.com:9093/#/alerts
